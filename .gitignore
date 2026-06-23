@@ -1,0 +1,14 @@
+# Dossier de build Maven (généré automatiquement, ne pas versionner)
+target/
+
+# Fichiers de configuration d'IDE
+.idea/
+*.iml
+.eclipse/
+.settings/
+.classpath
+.project
+
+# Fichiers système
+.DS_Store
+Thumbs.db
