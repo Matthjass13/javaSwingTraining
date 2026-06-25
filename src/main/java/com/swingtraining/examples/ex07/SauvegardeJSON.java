@@ -36,6 +36,11 @@ public class SauvegardeJSON implements FormatSauvegarde {
     }
 
     @Override
+    public String getExtension() {
+        return ".json";
+    }
+
+    @Override
     public String getNomFormat() {
         return "JSON";
     }

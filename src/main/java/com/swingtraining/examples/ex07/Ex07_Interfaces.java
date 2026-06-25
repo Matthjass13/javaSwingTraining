@@ -1,7 +1,10 @@
 package com.swingtraining.examples.ex07;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * EXEMPLE 07 — Les interfaces Java illustrées par un système de sauvegarde
@@ -95,17 +98,26 @@ public class Ex07_Interfaces {
         spinnerAge = new JSpinner(new SpinnerNumberModel(30, 0, 150, 1));
         panel.add(spinnerAge);
 
-        // Bouton de sauvegarde
+        // Ligne de boutons (prévisualiser + enregistrer sur le disque)
         panel.add(new JLabel());  // Cellule vide pour l'alignement de la grille
 
-        JButton boutonSauvegarder = new JButton("Sauvegarder");
-        boutonSauvegarder.setBackground(new Color(50, 120, 200));
-        boutonSauvegarder.setForeground(Color.WHITE);
-        boutonSauvegarder.setOpaque(true);
+        JPanel panelBoutons = new JPanel(new GridLayout(1, 2, 6, 0));
 
-        boutonSauvegarder.addActionListener(e -> sauvegarder());
+        JButton boutonPrevisualiser = new JButton("Prévisualiser");
+        boutonPrevisualiser.setBackground(new Color(50, 120, 200));
+        boutonPrevisualiser.setForeground(Color.WHITE);
+        boutonPrevisualiser.setOpaque(true);
+        boutonPrevisualiser.addActionListener(e -> sauvegarder());
 
-        panel.add(boutonSauvegarder);
+        JButton boutonEnregistrer = new JButton("Enregistrer...");
+        boutonEnregistrer.setBackground(new Color(40, 160, 80));
+        boutonEnregistrer.setForeground(Color.WHITE);
+        boutonEnregistrer.setOpaque(true);
+        boutonEnregistrer.addActionListener(e -> enregistrerFichier());
+
+        panelBoutons.add(boutonPrevisualiser);
+        panelBoutons.add(boutonEnregistrer);
+        panel.add(panelBoutons);
 
         return panel;
     }
@@ -270,6 +282,83 @@ public class Ex07_Interfaces {
         labelFormatActif.setText("Format actif : " + formatActuel.getNomFormat());
     }
 
+
+    // =========================================================================
+    // Écriture sur le disque
+    // =========================================================================
+
+    private void enregistrerFichier() {
+        // On valide et on sérialise d'abord (met aussi à jour la prévisualisation)
+        sauvegarder();
+
+        // Si la zone de résultat est vide, la validation a échoué — on arrête.
+        if (zoneResultat.getText().isBlank()) return;
+
+        /*
+         * JFileChooser en mode "enregistrer" (showSaveDialog).
+         * On pré-configure :
+         *   - un nom de fichier suggéré basé sur le prénom + l'extension du format
+         *   - un filtre pour n'afficher que les fichiers du bon type
+         */
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Enregistrer l'utilisateur");
+
+        String extension  = formatActuel.getExtension();           // ex: ".json"
+        String nomFichier = champPrenom.getText().trim()
+                          + "_" + champNom.getText().trim()
+                          + extension;                             // ex: "Alice_Dupont.json"
+        chooser.setSelectedFile(new java.io.File(nomFichier));
+
+        // Filtre : n'affiche que les fichiers correspondant au format actif
+        String descriptionFiltre = "Fichiers " + formatActuel.getNomFormat()
+                                 + " (*" + extension + ")";
+        chooser.setFileFilter(new FileNameExtensionFilter(
+            descriptionFiltre,
+            extension.substring(1)  // FileNameExtensionFilter veut "json" sans le point
+        ));
+
+        int choix = chooser.showSaveDialog(null);
+
+        if (choix != JFileChooser.APPROVE_OPTION) return;  // Annulé par l'utilisateur
+
+        // Récupérer le chemin choisi et ajouter l'extension si l'utilisateur l'a oubliée
+        java.io.File fichier = chooser.getSelectedFile();
+        if (!fichier.getName().endsWith(extension)) {
+            fichier = new java.io.File(fichier.getAbsolutePath() + extension);
+        }
+
+        // Construire l'objet utilisateur depuis les champs de saisie
+        Utilisateur utilisateur = new Utilisateur(
+            champNom.getText().trim(),
+            champPrenom.getText().trim(),
+            (Integer) spinnerAge.getValue()
+        );
+
+        try {
+            /*
+             * APPEL DE LA MÉTHODE PAR DÉFAUT de l'interface.
+             * Comme pour serialiser(), on n'a pas besoin de savoir quel format
+             * est actif : la méthode sauvegarderFichier() est définie une seule
+             * fois dans l'interface et héritée par JSON, XML et CSV.
+             */
+            formatActuel.sauvegarderFichier(utilisateur, Path.of(fichier.getAbsolutePath()));
+
+            JOptionPane.showMessageDialog(
+                null,
+                "Fichier enregistré :\n" + fichier.getAbsolutePath(),
+                "Succès",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(
+                null,
+                "Erreur lors de l'écriture du fichier :\n" + ex.getMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Ex07_Interfaces::new);

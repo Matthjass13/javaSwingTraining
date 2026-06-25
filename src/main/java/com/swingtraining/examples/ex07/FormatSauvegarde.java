@@ -1,5 +1,8 @@
 package com.swingtraining.examples.ex07;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 /**
  * INTERFACE : FormatSauvegarde
  *
@@ -30,6 +33,35 @@ public interface FormatSauvegarde {
      * @return Une chaîne de caractères représentant l'utilisateur dans ce format
      */
     String serialiser(Utilisateur utilisateur);
+
+    /**
+     * Écrit le contenu sérialisé dans un fichier sur le disque.
+     *
+     * Cette méthode est une "méthode par défaut" (default method), introduite
+     * en Java 8. Elle fournit une implémentation directement dans l'interface,
+     * que toutes les classes héritent SANS avoir à la redéfinir.
+     *
+     * Avantage : les trois classes (JSON, XML, CSV) n'ont pas besoin de
+     * répéter ce code identique. Si on veut changer la logique d'écriture
+     * (ex: ajouter des logs), on ne modifie qu'un seul endroit.
+     *
+     * @param utilisateur L'objet à sauvegarder
+     * @param destination Le chemin du fichier à créer ou écraser
+     * @throws IOException Si une erreur survient lors de l'écriture
+     */
+    default void sauvegarderFichier(Utilisateur utilisateur, Path destination) throws IOException {
+        // On délègue la sérialisation à la méthode abstraite serialiser(),
+        // puis on écrit le résultat dans le fichier en une seule instruction.
+        java.nio.file.Files.writeString(destination, serialiser(utilisateur));
+    }
+
+    /**
+     * Retourne l'extension de fichier associée à ce format.
+     * Utilisée pour pré-remplir le nom de fichier dans le JFileChooser.
+     *
+     * @return Par exemple ".json", ".xml", ".csv"
+     */
+    String getExtension();
 
     /**
      * Retourne le nom lisible du format (utilisé pour l'affichage dans l'UI).
