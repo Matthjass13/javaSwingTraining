@@ -22,6 +22,11 @@ public class SauvegardeCSV implements FormatSauvegarde {
     }
 
     @Override
+    public String getExtension() {
+        return ".csv";
+    }
+
+    @Override
     public String getNomFormat() {
         return "CSV";
     }

@@ -27,6 +27,11 @@ public class SauvegardeXML implements FormatSauvegarde {
     }
 
     @Override
+    public String getExtension() {
+        return ".xml";
+    }
+
+    @Override
     public String getNomFormat() {
         return "XML";
     }
